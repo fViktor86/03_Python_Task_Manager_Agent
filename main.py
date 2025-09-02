@@ -22,7 +22,20 @@ def add_task(task, desc=None):
         description=desc
     )
 
-tools = [add_task]
+@tool
+def show_tasks():
+    """Show the user's current tasks. Use this when the user wants to see their tasks. Every task should be on a new line."""
+    result_paginator = todoist.get_tasks()
+
+    tasks = []
+
+    for task_list in result_paginator:
+        for task in task_list:
+            tasks.append(task.content)
+
+    return tasks
+
+tools = [add_task, show_tasks]
 
 llm = ChatGoogleGenerativeAI(
     model='gemini-2.5-flash',
@@ -30,7 +43,9 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3
 )
 
-system_prompt = "You are a helpful assistant. You will help the user to add tasks and answer stupid questions. Your answers should be offensive or funny."
+system_prompt = """You are a helpful assistant. 
+                   You will help the user to add tasks and answer stupid questions. 
+                   You will help the user to show existing tasks. If a user asks to show the tasks, print them out in a bulleted list format."""
 
 prompt = ChatPromptTemplate([
     ("system", system_prompt),
