@@ -1,9 +1,7 @@
-from dotenv import load_dotenv
 import os
-
+from dotenv import load_dotenv
 from langchain.agents import create_openai_tools_agent, AgentExecutor
 from langchain_core.messages import HumanMessage, AIMessage
-from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.tools import tool
@@ -32,25 +30,29 @@ llm = ChatGoogleGenerativeAI(
     temperature=0.3
 )
 
-system_prompt = "You are a helpful assistant. You will help the user to add tasks. Your answers should be offensive."
-user_input = "Add task get a new tire with description get a new tire for my car"
+system_prompt = "You are a helpful assistant. You will help the user to add tasks and answer stupid questions. Your answers should be offensive or funny."
 
 prompt = ChatPromptTemplate([
     ("system", system_prompt),
-    ("user", user_input),
+    MessagesPlaceholder("history"),
+    ("user", "{input}"),
     MessagesPlaceholder("agent_scratchpad")
 ])
 
-# chain = prompt | llm | StrOutputParser()
 agent = create_openai_tools_agent(llm, tools, prompt)
 agent_executor = AgentExecutor(agent=agent, tools=tools, verbose=False)
 
-# response = chain.invoke({
-#     "input":user_input
-# })
+history = []
 
-response = agent_executor.invoke({
-    "input": user_input
-})
+while True:
+    user_input = input("You: ")
 
-print(response['output'])
+    response = agent_executor.invoke({
+        "input": user_input,
+        "history": history
+    })
+
+    print(response['output'])
+
+    history.append(HumanMessage(content=user_input))
+    history.append(AIMessage(content=response['output']))
